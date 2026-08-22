@@ -1,0 +1,63 @@
+const cityForm = document.querySelector("#cityForm");
+const showCitiesButton = document.querySelector("#showCitiesButton");
+
+showCitiesButton.addEventListener("click", () => {
+    loadCitiesFromDb();
+});
+
+cityForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(cityForm);
+
+    const city = {
+        name: formData.get("name"),
+        country: formData.get("country")
+    };
+
+    try {
+        const response = await fetch("/api/cities", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(city)
+        });
+
+        if (response.status === 409) {
+            alert("city already exists.");
+            cityForm.reset();
+            return;
+        }
+
+        if (!response.ok) {
+            alert("something went wrong.");
+            return;
+        }
+
+        alert("City added succesfully.");
+
+        cityForm.reset();
+
+    } catch(error) {
+        console.error(error);
+        alert("could not connect to server");
+    }
+});
+
+async function loadCitiesFromDb() {
+    try {
+        const response = await fetch("/api/cities");
+
+        if (!response.ok) {
+            throw new Error("Failed to load cities");
+        }
+
+        const cities = await response.json();
+
+        console.log(cities);
+
+    } catch (error) {
+        console.error(error);
+    }
+};

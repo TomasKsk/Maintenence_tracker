@@ -19,16 +19,69 @@ const client = new MongoClient(process.env.MONGODB_URI);
 await client.connect();
 
 const db = client.db("maintenanceApp");
+await db.collection("cities").createIndex(
+    { name: 1, country: 1 },
+    { unique: true }
+);
+
 console.log("Connected to mongoDB");
 
 app.post("/api/cities", async (req, res) => {
     try {
-        await db.collection("cities").insertOne(city);
+        console.log("Request body:", req.body);
 
-        // res.redirect("/");
+        const city = {
+        name: req.body.name,
+        country: req.body.country
+        };
+
+        const result = await db
+            .collection("cities")
+            .insertOne(city);
+
+        console.log("Inserted ID:", result.insertedId);
+
+        res.status(201).json({
+            message: "City created",
+            cityId: result.insertedId
+        });
+
     } catch (error) {
-        console.log(error)
-        res.status(500).send("Failed to create city");
+        if (error.code === 11000) {
+            console.log("Duplicate city:", req.body);
+
+            return res
+                .status(409)
+                .json({
+                    message: "City already exists"
+                });
+        }
+
+        console.error(error);
+
+        res
+        .status(500)
+        .json({
+            message: "Failed to create city"
+        });
+    }
+});
+
+app.get("/api/cities", async (req, res) => {
+    try {
+        const cities = await db
+            .collection("cities")
+            .find()
+            .toArray();
+
+        res.status(200).json(cities);
+
+    } catch(error) {
+        console.error(error);
+
+        res.status(500).json({
+            message: "Failed to load cities"
+        });
     }
 });
 
