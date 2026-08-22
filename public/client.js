@@ -1,9 +1,5 @@
 const cityForm = document.querySelector("#cityForm");
-const showCitiesButton = document.querySelector("#showCitiesButton");
-
-showCitiesButton.addEventListener("click", () => {
-    loadCitiesFromDb();
-});
+const customerCitiesSelect = document.querySelector("#customerCity");
 
 cityForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -56,8 +52,17 @@ async function loadCitiesFromDb() {
         const cities = await response.json();
 
         console.log(cities);
+        cities.forEach(city => {
+            const newOption = document.createElement("option");
+            newOption.value = city._id;
+            newOption.textContent = city.name;
+
+            customerCitiesSelect.appendChild(newOption);
+        });
 
     } catch (error) {
         console.error(error);
     }
 };
+
+loadCitiesFromDb();
