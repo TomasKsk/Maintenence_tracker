@@ -32,6 +32,7 @@ cityForm.addEventListener("submit", async (event) => {
         }
 
         alert("City added succesfully.");
+        await loadCitiesFromDb();
 
         cityForm.reset();
 
@@ -51,7 +52,10 @@ async function loadCitiesFromDb() {
 
         const cities = await response.json();
 
-        console.log(cities);
+        customerCitiesSelect.innerHTML = `
+            <option value="">Select City</option>
+        `;
+
         cities.forEach(city => {
             const newOption = document.createElement("option");
             newOption.value = city._id;
