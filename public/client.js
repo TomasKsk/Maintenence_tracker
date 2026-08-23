@@ -1,8 +1,10 @@
 const cityForm = document.querySelector("#cityForm");
+const citySubmitButton = document.querySelector("#citySubmitButton");
 const customerCitiesSelect = document.querySelector("#customerCity");
 
 cityForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+    citySubmitButton.disabled = true;
 
     const formData = new FormData(cityForm);
 
@@ -39,6 +41,8 @@ cityForm.addEventListener("submit", async (event) => {
     } catch(error) {
         console.error(error);
         alert("could not connect to server");
+    } finally {
+        citySubmitButton.disabled = false;
     }
 });
 
