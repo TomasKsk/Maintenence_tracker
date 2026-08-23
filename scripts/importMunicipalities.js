@@ -1,4 +1,8 @@
 import ExcelJS from "exceljs";
+import { MongoClient } from "mongodb";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const workbook = new ExcelJS.Workbook();
 
@@ -6,7 +10,7 @@ await workbook.xlsx.readFile(
   "./data/raw/gemeindeverzeichnis.xlsx"
 );
 
-const workSheet = workbook.worksheets[1]
+const workSheet = workbook.getWorksheet("municipalities");
 const municipalities = [];
 const uniqueMunicipalities = new Map();
 
@@ -60,6 +64,39 @@ const municipalUniqueResults = [
     ...uniqueMunicipalities.values()
 ];
 
-console.log(municipalities.slice(0,10));
-console.log("Total: ", municipalities.length);
-console.log("Total uniques: ", municipalUniqueResults.length)
+const client = new MongoClient(process.env.MONGODB_URI);
+await client.connect();
+
+const db = client.db("maintenanceApp");
+const municipalitiesCollection = db.collection("municipalities");
+
+await municipalitiesCollection.createIndex(
+    { officialKey: 1 },
+    { unique: true }
+);
+
+const importAllMunicipalitiesToDB = municipalUniqueResults.map((municipality) => ({
+    updateOne: {
+        filter: {
+            officialKey: municipality.officialKey
+        },
+
+        update: {
+            $set: municipality
+        },
+
+        upsert: true
+    }
+}));
+
+const result = await municipalitiesCollection.bulkWrite(
+    importAllMunicipalitiesToDB,
+    {
+        ordered: false
+    }
+)
+
+console.log("Import finished");
+console.log("Matched:", result.matchedCount);
+console.log("Modified:", result.modifiedCount);
+console.log("Inserted:", result.upsertedCount);
