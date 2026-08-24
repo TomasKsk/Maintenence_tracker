@@ -20,7 +20,7 @@ function parseLongLatNumbers(value) {
     );
 };
 
-workSheet.eachRow((row, rowNumber) => {
+workSheet.eachRow( row => {
     const recordType = row.getCell(1).value;
 
     if (recordType !== "60") {
@@ -65,38 +65,52 @@ const municipalUniqueResults = [
 ];
 
 const client = new MongoClient(process.env.MONGODB_URI);
-await client.connect();
 
-const db = client.db("maintenanceApp");
-const municipalitiesCollection = db.collection("municipalities");
+try {
+    await client.connect();
 
-await municipalitiesCollection.createIndex(
-    { officialKey: 1 },
-    { unique: true }
-);
+    const db = client.db("maintenanceApp");
+    const municipalitiesCollection = db.collection("municipalities");
 
-const importAllMunicipalitiesToDB = municipalUniqueResults.map((municipality) => ({
-    updateOne: {
-        filter: {
-            officialKey: municipality.officialKey
-        },
+    await municipalitiesCollection.createIndex(
+        { officialKey: 1 },
+        { unique: true }
+    );
 
-        update: {
-            $set: municipality
-        },
+    const bulkOperations = municipalUniqueResults.map((municipality) => ({
+        updateOne: {
+            filter: {
+                officialKey: municipality.officialKey
+            },
 
-        upsert: true
-    }
-}));
+            update: {
+                $set: municipality
+            },
 
-const result = await municipalitiesCollection.bulkWrite(
-    importAllMunicipalitiesToDB,
-    {
-        ordered: false
-    }
-)
+            upsert: true
+        }
+    }));
 
-console.log("Import finished");
-console.log("Matched:", result.matchedCount);
-console.log("Modified:", result.modifiedCount);
-console.log("Inserted:", result.upsertedCount);
+    const result = await municipalitiesCollection.bulkWrite(
+        bulkOperations,
+        {
+            ordered: false
+        }
+    )
+
+    console.log("Import finished");
+    console.log("Matched:", result.matchedCount);
+    console.log("Modified:", result.modifiedCount);
+    console.log("Inserted:", result.upsertedCount);
+
+} catch (error) {
+
+    console.error("Import failed:", error);
+
+} finally {
+
+    await client.close();
+    console.log("MongoDB connection closed");
+
+};
+
