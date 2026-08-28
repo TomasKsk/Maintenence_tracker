@@ -36,67 +36,45 @@ await db.collection("municipalities").createIndex(
 
 console.log("Connected to mongoDB");
 
-app.post("/api/cities", async (req, res) => {
-    try {
-        console.log("Request body:", req.body);
+app.get("/api/municipalities", async (req, res) => {
 
-        const city = {
-        name: req.body.name,
-        country: req.body.country
+    try {
+        
+        const search = req.query.search;
+        const reqLimit = Math.abs(Number(req.query.limit));
+        const searchLimit = Math.min(reqLimit || 20, 20);
+
+        if (
+            typeof search !== "string" ||
+            search.trim().length < 3
+        ) {
+            return res.status(400).json({
+                message: "Search must contain at least 3 characters"
+            });
         };
 
-        const result = await db
-            .collection("cities")
-            .insertOne(city);
-
-        console.log("Inserted ID:", result.insertedId);
-
-        res.status(201).json({
-            message: "City created",
-            cityId: result.insertedId
-        });
-
-    } catch (error: unknown) {
-        if (
-            error instanceof MongoServerError &&
-            error.code === 11000
-        ) {
-            console.log("Duplicate city:", req.body);
-
-            return res
-                .status(409)
-                .json({
-                    message: "City already exists"
-                });
-        }
-
-        console.error(error);
-
-        res
-        .status(500)
-        .json({
-            message: "Failed to create city"
-        });
-    }
-});
-
-app.get("/api/cities", async (req, res) => {
-    try {
-        const cities = await db
-            .collection("cities")
-            .find()
+        const municipalities = await db
+            .collection("municipalities")
+            .find({
+                name: {
+                    $regex: search.trim(),
+                    $options: "i"
+                }
+            })
+            .limit(searchLimit)
             .toArray();
 
-        res.status(200).json(cities);
+        return res.status(200).json(municipalities);
 
-    } catch(error) {
+    } catch (error) {
         console.error(error);
 
-        res.status(500).json({
-            message: "Failed to load cities"
-        });
+        return res.status(500).json({
+            message: "Failed to load municipalities"
+        })
     }
 });
+
 
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
