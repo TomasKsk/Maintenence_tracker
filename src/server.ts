@@ -1,7 +1,6 @@
 import express from "express";
 import { 
     MongoClient,
-    MongoServerError
 } from "mongodb";
 
 import dotenv from "dotenv";
@@ -36,6 +35,17 @@ await db.collection("municipalities").createIndex(
 
 console.log("Connected to mongoDB");
 
+function normalizeSearchName (name: string) {
+    return name
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .toLowerCase();
+};
+
+function escapeRegex (value: string) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
 app.get("/api/municipalities", async (req, res) => {
 
     try {
@@ -53,12 +63,14 @@ app.get("/api/municipalities", async (req, res) => {
             });
         };
 
+        const normalizedSearch = normalizeSearchName(search.trim());
+        const escapedSearch = escapeRegex(normalizedSearch);
+
         const municipalities = await db
             .collection("municipalities")
             .find({
-                name: {
-                    $regex: search.trim(),
-                    $options: "i"
+                searchName: {
+                    $regex: `^${escapedSearch}`
                 }
             })
             .limit(searchLimit)

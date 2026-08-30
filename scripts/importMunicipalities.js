@@ -20,6 +20,13 @@ function parseLongLatNumbers(value) {
     );
 };
 
+function normalizeSearchName (name) {
+    return String(name)
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .toLowerCase();
+}
+
 workSheet.eachRow( row => {
     const recordType = row.getCell(1).value;
 
@@ -37,6 +44,10 @@ workSheet.eachRow( row => {
         ].join(""),
 
         name: row.getCell(8).value,
+
+        searchName: normalizeSearchName(
+            row.getCell(8).value
+        ),
 
         postalCode: row.getCell(14).value,
 
