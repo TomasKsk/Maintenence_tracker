@@ -1,6 +1,6 @@
 import express from "express";
 
-import municipalitiesRouter from "./routes/municipalities.routes.js"
+import municipalitiesRouter from "./routes/municipalities.routes.js";
 
 const app = express();
 
