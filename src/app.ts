@@ -1,6 +1,7 @@
 import express from "express";
 
 import municipalitiesRouter from "./routes/municipalities.routes.js";
+import customerRouter from "./routes/customers.routes.js";
 
 const app = express();
 
@@ -16,5 +17,10 @@ app.use(
     "/api/municipalities",
     municipalitiesRouter
 );
+
+app.use(
+    "/api/customers",
+    customerRouter
+)
 
 export default app;
