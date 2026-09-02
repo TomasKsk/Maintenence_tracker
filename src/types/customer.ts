@@ -5,6 +5,8 @@ export interface CustomerSite {
     name: string;
     municipalityId: ObjectId;
     address: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface Customer {
@@ -12,4 +14,15 @@ export interface Customer {
     sites: CustomerSite[];
     createdAt: Date;
     updatedAt: Date;
+}
+
+export interface CreateCustomerSiteInput {
+    name: string;
+    address: string;
+    municipalityId: string;
+}
+
+export interface CreateCustomerInput {
+    name: string;
+    sites: CreateCustomerSiteInput[];
 }
