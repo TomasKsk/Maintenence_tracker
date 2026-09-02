@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import { getDatabase } from "../config/database.js";
 
 function normalizeSearchName (name: string) {
@@ -14,7 +14,8 @@ function escapeRegex (value: string) {
 
 export async function searchMunicipalities(
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ) {
     try {
         
@@ -49,10 +50,6 @@ export async function searchMunicipalities(
         return res.status(200).json(municipalities);
 
     } catch (error) {
-        console.error(error);
-
-        return res.status(500).json({
-            message: "Failed to load municipalities"
-        })
+        next(error)
     }
 }

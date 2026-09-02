@@ -88,6 +88,10 @@ try {
         { unique: true }
     );
 
+    await municipalitiesCollection.createIndex(
+        { searchName: 1 }
+    );
+
     const bulkOperations = municipalUniqueResults.map((municipality) => ({
         updateOne: {
             filter: {

@@ -2,6 +2,7 @@ import express from "express";
 
 import municipalitiesRouter from "./routes/municipalities.routes.js";
 import customerRouter from "./routes/customers.routes.js";
+import { errorHandler } from "./middleware/error.middleware.js";
 
 const app = express();
 
@@ -10,8 +11,6 @@ app.use(express.json());
 app.use(express.urlencoded({
     extended: true
 }));
-
-app.use(express.static("public"));
 
 app.use(
     "/api/municipalities",
@@ -22,5 +21,7 @@ app.use(
     "/api/customers",
     customerRouter
 )
+
+app.use(errorHandler);
 
 export default app;

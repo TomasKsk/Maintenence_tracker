@@ -1,13 +1,18 @@
-import type { Request, Response } from "express";
+import type { 
+    Request, 
+    Response,
+    NextFunction
+} from "express";
 
 import {
     createCustomerService,
     getCustomersService
-} from "../services/customers.servis.js"
+} from "../services/customers.service.js"
 
 export async function createCustomer (
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ) {
     try {
         const result = await createCustomerService(req.body);
@@ -18,11 +23,7 @@ export async function createCustomer (
         });
 
     } catch ( error ) {
-        console.error(error);
-
-        return res.status(500).json({
-            message: "Failed to create customer"
-        });
+        next(error);
     };
 };
 
@@ -30,17 +31,17 @@ export async function createCustomer (
 
 export async function getCustomers (
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
 ) {
     try {
         const customers = await getCustomersService();
-        return res.status(200).json(customers);
+
+        return res
+            .status(200)
+            .json(customers);
 
     } catch ( error ) {
-        console.error(error);
-
-        return res.status(500).json({
-            message: "Failed to load customers"
-        });
+        next(error)
     };
 };

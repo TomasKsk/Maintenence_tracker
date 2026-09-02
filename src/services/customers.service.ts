@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { getDatabase } from "../config/database.js";
+import { AppError } from "../errors/AppErrors.js";
 
 import type {
     Customer,
@@ -8,28 +9,6 @@ import type {
     CreateCustomerSiteInput
 } from "../types/customer.js";
 
-function validateCustomer (
-    name: unknown,
-    sites: unknown
-) {
-    if (
-        typeof name !== "string" ||
-        name.trim().length < 2
-    ) {
-        throw new Error(
-            "Customer name is required"
-        );
-    }
-
-    if (
-        !Array.isArray(sites) ||
-        sites.length === 0
-    ) {
-        throw new Error(
-            "At least one site is required"
-        );
-    }
-};
 
 function isValidSite (
     value: unknown
@@ -61,9 +40,10 @@ async function resolveMunicipalityId (
     municipalityId: string
 ) {
     if (!ObjectId.isValid(municipalityId)) {
-        throw new Error(
-            "Invalid municipality ID"
-        )
+        throw new AppError(
+            "Invalid municipality ID",
+            400
+        );
     }
 
     const db = getDatabase();
@@ -77,13 +57,15 @@ async function resolveMunicipalityId (
         });
 
     if (!municipality) {
-        throw new Error(
-            "Municipality does not exist"
+        throw new AppError(
+            "Municipality does not exist",
+            400
         );
     }
     
     return objectId;
 };
+
 
 
 async function createCustomerSites (
@@ -93,12 +75,7 @@ async function createCustomerSites (
     const customerSites: CustomerSite[] = [];
 
     for (const site of sites) {
-        if (!isValidSite( site )) {
-            throw new Error(
-                "Invalid site data"
-            )
-        };
-
+        
         const municipalityId = await resolveMunicipalityId( site.municipalityId );
         
         const currentDate = new Date();
@@ -116,12 +93,39 @@ async function createCustomerSites (
     return customerSites;
 }
 
-export async function createCustomerService (
-    data: CreateCustomerInput
-) {
-    const { name, sites } = data;
+function isCreateCustomerInput (
+    value: unknown
+): value is CreateCustomerInput {
 
-    validateCustomer( name, sites );
+    if (
+        typeof value !== "object" ||
+        value === null ||
+        !("name" in value) ||
+        !("sites" in value)
+    ) {
+        return false;
+    }
+
+    return (
+        typeof value.name === "string" &&
+        value.name.trim().length >= 2 &&
+        Array.isArray(value.sites) &&
+        value.sites.length > 0 &&
+        value.sites.every(isValidSite)
+    );
+};
+
+export async function createCustomerService (
+    data: unknown
+) {
+    if (!isCreateCustomerInput(data)) {
+        throw new AppError(
+            "Invalid customer data",
+            400
+        );
+    }
+
+    const { name, sites } = data;
 
     const customerSites = await createCustomerSites( sites );
 
